@@ -1,239 +1,665 @@
-// Hand-written until `supabase gen types typescript --linked` can run
-// against a deployed project. Mirrors `supabase/migrations/0001_init.sql`.
-// Keep these two files in lockstep.
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          phone: string | null;
-          email: string | null;
-          name: string | null;
-          bean_balance: number;
-          stripe_customer_id: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          phone?: string | null;
-          email?: string | null;
-          name?: string | null;
-          bean_balance?: number;
-          stripe_customer_id?: string | null;
-        };
-        Update: {
-          phone?: string | null;
-          email?: string | null;
-          name?: string | null;
-          bean_balance?: number;
-          stripe_customer_id?: string | null;
-        };
-      };
       cafes: {
         Row: {
-          id: string;
-          name: string;
-          slug: string;
-          address: string | null;
-          lat: number | null;
-          lng: number | null;
-          hours_json: Record<string, [string, string]>;
-          square_location_id: string | null;
-          square_access_token_enc: string | null;
-          stripe_account_id: string | null;
-          active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database['public']['Tables']['cafes']['Row']> & {
-          name: string;
-          slug: string;
-        };
-        Update: Partial<Database['public']['Tables']['cafes']['Row']>;
-      };
+          active: boolean
+          address: string | null
+          created_at: string
+          hours_json: Json
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          slug: string
+          square_access_token_enc: string | null
+          square_location_id: string | null
+          stripe_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          created_at?: string
+          hours_json?: Json
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          slug: string
+          square_access_token_enc?: string | null
+          square_location_id?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          created_at?: string
+          hours_json?: Json
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          slug?: string
+          square_access_token_enc?: string | null
+          square_location_id?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_items: {
         Row: {
-          id: string;
-          cafe_id: string;
-          square_object_id: string;
-          name: string;
-          description: string | null;
-          price_cents: number;
-          category: string | null;
-          is_available: boolean;
-          image_url: string | null;
-          sort: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database['public']['Tables']['catalog_items']['Row']> & {
-          cafe_id: string;
-          square_object_id: string;
-          name: string;
-          price_cents: number;
-        };
-        Update: Partial<Database['public']['Tables']['catalog_items']['Row']>;
-      };
+          cafe_id: string
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean
+          name: string
+          price_cents: number
+          sort: number
+          square_object_id: string
+          updated_at: string
+        }
+        Insert: {
+          cafe_id: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name: string
+          price_cents: number
+          sort?: number
+          square_object_id: string
+          updated_at?: string
+        }
+        Update: {
+          cafe_id?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name?: string
+          price_cents?: number
+          sort?: number
+          square_object_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_items_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_modifiers: {
         Row: {
-          id: string;
-          cafe_id: string;
-          square_object_id: string;
-          parent_item_id: string | null;
-          modifier_list_id: string | null;
-          name: string;
-          price_delta_cents: number;
-          selection_type: 'single' | 'multiple';
-          sort: number;
-          created_at: string;
-        };
-        Insert: Partial<Database['public']['Tables']['catalog_modifiers']['Row']> & {
-          cafe_id: string;
-          square_object_id: string;
-          name: string;
-        };
-        Update: Partial<Database['public']['Tables']['catalog_modifiers']['Row']>;
-      };
-      orders: {
-        Row: {
-          id: string;
-          user_id: string;
-          cafe_id: string;
-          status: Database['public']['Enums']['order_status'];
-          subtotal_cents: number;
-          tip_cents: number;
-          beans_redeemed: number;
-          beans_value_cents: number;
-          total_charged_cents: number;
-          app_fee_cents: number;
-          stripe_payment_intent_id: string | null;
-          square_order_id: string | null;
-          pickup_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database['public']['Tables']['orders']['Row']> & {
-          user_id: string;
-          cafe_id: string;
-          subtotal_cents: number;
-          total_charged_cents: number;
-        };
-        Update: Partial<Database['public']['Tables']['orders']['Row']>;
-      };
-      order_items: {
-        Row: {
-          id: string;
-          order_id: string;
-          catalog_item_id: string | null;
-          name_snapshot: string;
-          qty: number;
-          unit_price_cents: number;
-          modifiers_json: Array<{
-            catalog_object_id: string;
-            name: string;
-            price_delta_cents: number;
-          }>;
-          created_at: string;
-        };
-        Insert: Omit<
-          Database['public']['Tables']['order_items']['Row'],
-          'id' | 'created_at'
-        >;
-        Update: Partial<Database['public']['Tables']['order_items']['Row']>;
-      };
+          cafe_id: string
+          created_at: string
+          id: string
+          modifier_list_id: string | null
+          name: string
+          parent_item_id: string | null
+          price_delta_cents: number
+          selection_type: string
+          sort: number
+          square_object_id: string
+        }
+        Insert: {
+          cafe_id: string
+          created_at?: string
+          id?: string
+          modifier_list_id?: string | null
+          name: string
+          parent_item_id?: string | null
+          price_delta_cents?: number
+          selection_type?: string
+          sort?: number
+          square_object_id: string
+        }
+        Update: {
+          cafe_id?: string
+          created_at?: string
+          id?: string
+          modifier_list_id?: string | null
+          name?: string
+          parent_item_id?: string | null
+          price_delta_cents?: number
+          selection_type?: string
+          sort?: number
+          square_object_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_modifiers_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_modifiers_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_ledger: {
         Row: {
-          id: string;
-          user_id: string;
-          order_id: string | null;
-          delta: number;
-          reason: Database['public']['Enums']['ledger_reason'];
-          idempotency_key: string;
-          notes: string | null;
-          created_at: string;
-        };
-        Insert: Omit<
-          Database['public']['Tables']['loyalty_ledger']['Row'],
-          'id' | 'created_at'
-        >;
-        Update: Partial<Database['public']['Tables']['loyalty_ledger']['Row']>;
-      };
-      reimbursements: {
-        Row: {
-          id: string;
-          cafe_id: string;
-          period_start: string;
-          period_end: string;
-          beans_value_cents: number;
-          stripe_transfer_id: string | null;
-          status: Database['public']['Enums']['reimbursement_status'];
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database['public']['Tables']['reimbursements']['Row']> & {
-          cafe_id: string;
-          period_start: string;
-          period_end: string;
-          beans_value_cents: number;
-        };
-        Update: Partial<Database['public']['Tables']['reimbursements']['Row']>;
-      };
-      webhook_events: {
-        Row: {
-          id: string;
-          source: 'stripe' | 'square';
-          event_id: string;
-          payload: unknown;
-          processed_at: string | null;
-          error: string | null;
-          created_at: string;
-        };
+          created_at: string
+          delta: number
+          id: string
+          idempotency_key: string
+          notes: string | null
+          order_id: string | null
+          reason: Database["public"]["Enums"]["ledger_reason"]
+          user_id: string
+        }
         Insert: {
-          source: 'stripe' | 'square';
-          event_id: string;
-          payload: unknown;
-        };
-        Update: { processed_at?: string | null; error?: string | null };
-      };
+          created_at?: string
+          delta: number
+          id?: string
+          idempotency_key: string
+          notes?: string | null
+          order_id?: string | null
+          reason: Database["public"]["Enums"]["ledger_reason"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delta?: number
+          id?: string
+          idempotency_key?: string
+          notes?: string | null
+          order_id?: string | null
+          reason?: Database["public"]["Enums"]["ledger_reason"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_ledger_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          catalog_item_id: string | null
+          created_at: string
+          id: string
+          modifiers_json: Json
+          name_snapshot: string
+          order_id: string
+          qty: number
+          unit_price_cents: number
+        }
+        Insert: {
+          catalog_item_id?: string | null
+          created_at?: string
+          id?: string
+          modifiers_json?: Json
+          name_snapshot: string
+          order_id: string
+          qty: number
+          unit_price_cents: number
+        }
+        Update: {
+          catalog_item_id?: string | null
+          created_at?: string
+          id?: string
+          modifiers_json?: Json
+          name_snapshot?: string
+          order_id?: string
+          qty?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          app_fee_cents: number
+          beans_redeemed: number
+          beans_value_cents: number
+          cafe_id: string
+          created_at: string
+          id: string
+          pickup_at: string | null
+          square_order_id: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id: string | null
+          subtotal_cents: number
+          tip_cents: number
+          total_charged_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_fee_cents?: number
+          beans_redeemed?: number
+          beans_value_cents?: number
+          cafe_id: string
+          created_at?: string
+          id?: string
+          pickup_at?: string | null
+          square_order_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id?: string | null
+          subtotal_cents: number
+          tip_cents?: number
+          total_charged_cents: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_fee_cents?: number
+          beans_redeemed?: number
+          beans_value_cents?: number
+          cafe_id?: string
+          created_at?: string
+          id?: string
+          pickup_at?: string | null
+          square_order_id?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          stripe_payment_intent_id?: string | null
+          subtotal_cents?: number
+          tip_cents?: number
+          total_charged_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bean_balance: number
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          stripe_customer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bean_balance?: number
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          stripe_customer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bean_balance?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          stripe_customer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       push_tokens: {
         Row: {
-          user_id: string;
-          expo_token: string;
-          platform: 'ios' | 'android';
-          updated_at: string;
-        };
-        Insert: { user_id: string; expo_token: string; platform: 'ios' | 'android' };
-        Update: { updated_at?: string };
-      };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+          expo_token: string
+          platform: Database["public"]["Enums"]["push_platform"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          expo_token: string
+          platform: Database["public"]["Enums"]["push_platform"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          expo_token?: string
+          platform?: Database["public"]["Enums"]["push_platform"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reimbursements: {
+        Row: {
+          beans_value_cents: number
+          cafe_id: string
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          status: Database["public"]["Enums"]["reimbursement_status"]
+          stripe_transfer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          beans_value_cents: number
+          cafe_id: string
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          status?: Database["public"]["Enums"]["reimbursement_status"]
+          stripe_transfer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          beans_value_cents?: number
+          cafe_id?: string
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          status?: Database["public"]["Enums"]["reimbursement_status"]
+          stripe_transfer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reimbursements_cafe_id_fkey"
+            columns: ["cafe_id"]
+            isOneToOne: false
+            referencedRelation: "cafes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          event_id: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          source: Database["public"]["Enums"]["webhook_source"]
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event_id: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          source: Database["public"]["Enums"]["webhook_source"]
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event_id?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          source?: Database["public"]["Enums"]["webhook_source"]
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
     Enums: {
+      ledger_reason: "earn" | "redeem" | "adjust" | "expire"
       order_status:
-        | 'pending'
-        | 'paid'
-        | 'accepted'
-        | 'in_progress'
-        | 'ready'
-        | 'completed'
-        | 'cancelled'
-        | 'failed';
-      ledger_reason: 'earn' | 'redeem' | 'adjust' | 'expire';
-      reimbursement_status: 'pending' | 'paid' | 'failed';
-    };
-    CompositeTypes: Record<string, never>;
-  };
+        | "pending"
+        | "paid"
+        | "accepted"
+        | "in_progress"
+        | "ready"
+        | "completed"
+        | "cancelled"
+        | "failed"
+      push_platform: "ios" | "android"
+      reimbursement_status: "pending" | "paid" | "failed"
+      webhook_source: "stripe" | "square"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      ledger_reason: ["earn", "redeem", "adjust", "expire"],
+      order_status: [
+        "pending",
+        "paid",
+        "accepted",
+        "in_progress",
+        "ready",
+        "completed",
+        "cancelled",
+        "failed",
+      ],
+      push_platform: ["ios", "android"],
+      reimbursement_status: ["pending", "paid", "failed"],
+      webhook_source: ["stripe", "square"],
+    },
+  },
+} as const
+
+
+// ---------------------------------------------------------------------------
+// Strict shapes for jsonb columns + convenience aliases.
+//
+// The generated types model `order_items.modifiers_json` as the generic
+// `Json` type (because Postgres jsonb has no shape). At the app layer we
+// know what we put in there, so re-export OrderItem with a stricter type.
+// Keep these aliases below the generated block so re-running codegen via
+// the Management API only replaces the top of the file.
+// ---------------------------------------------------------------------------
+
+export type OrderItemModifier = {
+  catalog_object_id: string;
+  name: string;
+  price_delta_cents: number;
 };
 
-// Convenience row aliases used throughout the app.
-export type Cafe = Database['public']['Tables']['cafes']['Row'];
-export type CatalogItem = Database['public']['Tables']['catalog_items']['Row'];
-export type CatalogModifier = Database['public']['Tables']['catalog_modifiers']['Row'];
-export type Order = Database['public']['Tables']['orders']['Row'];
-export type OrderItem = Database['public']['Tables']['order_items']['Row'];
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type LedgerEntry = Database['public']['Tables']['loyalty_ledger']['Row'];
-export type OrderStatus = Database['public']['Enums']['order_status'];
+export type Cafe = Tables<'cafes'>;
+export type CatalogItem = Tables<'catalog_items'>;
+export type CatalogModifier = Tables<'catalog_modifiers'>;
+export type Profile = Tables<'profiles'>;
+export type Order = Tables<'orders'>;
+export type OrderItem = Omit<Tables<'order_items'>, 'modifiers_json'> & {
+  modifiers_json: OrderItemModifier[];
+};
+export type LedgerEntry = Tables<'loyalty_ledger'>;
+export type OrderStatus = Enums<'order_status'>;

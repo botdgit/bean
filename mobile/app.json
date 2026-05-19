@@ -48,7 +48,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "BEAN uses your location to show nearby coffee shops."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

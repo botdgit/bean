@@ -17,12 +17,16 @@ export function groupModifiers(modifiers: CatalogModifier[]): ModifierGroup[] {
   const map = new Map<string, ModifierGroup>();
   for (const m of modifiers) {
     const key = m.modifier_list_id ?? `__loose_${m.id}`;
-    let g = map.get(key);
-    if (!g) {
-      g = { listId: key, selectionType: m.selection_type, modifiers: [] };
-      map.set(key, g);
+    // selection_type lives in a CHECK constraint, so codegen sees it as
+    // `string`. Coerce here; anything unexpected falls back to single-select.
+    const selectionType: 'single' | 'multiple' =
+      m.selection_type === 'multiple' ? 'multiple' : 'single';
+    const existing = map.get(key);
+    if (existing) {
+      existing.modifiers.push(m);
+    } else {
+      map.set(key, { listId: key, selectionType, modifiers: [m] });
     }
-    g.modifiers.push(m);
   }
   return Array.from(map.values());
 }
