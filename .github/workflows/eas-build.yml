@@ -1,0 +1,35 @@
+# Placeholder workflow. Wire up once EAS credentials + Apple/Stripe accounts exist.
+# Triggered manually until iOS signing is configured.
+
+name: EAS Build (iOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+
+jobs:
+  build:
+    if: false  # disabled until EXPO_TOKEN and Apple signing are configured
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+        working-directory: ./mobile
+      - run: eas build --platform ios --profile ${{ inputs.profile }} --non-interactive
+        working-directory: ./mobile

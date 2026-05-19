@@ -1,0 +1,66 @@
+project_id = "bean"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "bean://"
+additional_redirect_urls = ["bean://auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+template = "Your BEAN code is {{ .Code }}"
+
+# Twilio is configured via secrets in deployed environments; left out of source.
+
+[edge_runtime]
+enabled = true
+inspector_port = 8083
+
+[functions.checkout-create-intent]
+verify_jwt = true
+[functions.order-confirm]
+verify_jwt = true
+[functions.loyalty-preview]
+verify_jwt = true
+[functions.reorder]
+verify_jwt = true
+
+# Webhooks must not require a Supabase JWT (Stripe/Square sign requests themselves).
+[functions.webhook-stripe]
+verify_jwt = false
+[functions.webhook-square]
+verify_jwt = false
+
+# Cron-triggered functions invoked by Supabase scheduler or external runner.
+[functions.cron-catalog-sync]
+verify_jwt = false
+[functions.cron-loyalty-reimbursement]
+verify_jwt = false
+[functions.cron-loyalty-expiry]
+verify_jwt = false

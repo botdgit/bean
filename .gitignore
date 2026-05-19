@@ -1,0 +1,48 @@
+# Env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.p8
+*.p12
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Expo / EAS
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.jks
+*.keystore
+*.mobileprovision
+ios/Pods/
+ios/build/
+android/build/
+android/app/build/
+android/.gradle/
+*.xcworkspace
+*.xcodeproj
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+supabase/.env
