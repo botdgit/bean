@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -102,9 +103,17 @@ export default function Wallet() {
           keyExtractor={(e) => e.id}
           renderItem={({ item }) => <LedgerRow entry={item} />}
           ItemSeparatorComponent={() => <View style={styles.sep} />}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={{ paddingBottom: 16 }}
         />
       )}
+
+      <Pressable
+        style={styles.signOut}
+        onPress={() => supabase.auth.signOut()}
+        hitSlop={8}
+      >
+        <Text style={styles.signOutText}>Sign out</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -137,4 +146,6 @@ const styles = StyleSheet.create({
   rowDate: { fontSize: 12, color: '#8D6E63', marginTop: 2 },
   rowDelta: { fontSize: 15, fontWeight: '600' },
   sep: { height: 1, backgroundColor: '#EFEBE9', marginHorizontal: 20 },
+  signOut: { alignSelf: 'center', padding: 16, marginTop: 'auto' },
+  signOutText: { color: '#8D6E63', fontSize: 14 },
 });
