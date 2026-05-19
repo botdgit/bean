@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MoneyText } from '@/components/MoneyText';
 import { useProfile } from '@/hooks/useProfile';
 import { canRedeem, formatPence } from '@/lib/format';
+import { inExpoGo, stripeAvailable } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { useBasket } from '@/state/basket';
 
@@ -29,6 +30,12 @@ type IntentResponse = {
     total_charged_cents: number;
     app_fee_cents: number;
   };
+};
+
+type MockResponse = {
+  order_id: string;
+  status: 'paid';
+  mock: true;
 };
 
 export default function Checkout() {
@@ -50,9 +57,20 @@ export default function Checkout() {
   const [status, setStatus] = useState<'preparing' | 'ready' | 'paying' | 'confirming'>('preparing');
   const [error, setError] = useState<string | null>(null);
 
+  // In Expo Go (or when no Stripe key is configured), we bypass Stripe and
+  // call mock-checkout instead. The basket and totals UI are unchanged.
+  const useMock = !stripeAvailable;
+
   useEffect(() => {
     if (!cafeId || lines.length === 0) {
       router.back();
+      return;
+    }
+
+    if (useMock) {
+      // No prep needed for the mock path.
+      setStatus('ready');
+      setSheetReady(true);
       return;
     }
 
@@ -110,9 +128,35 @@ export default function Checkout() {
     return () => {
       cancelled = true;
     };
-  }, [cafeId]);
+  }, [cafeId, useMock]);
 
   async function pay() {
+    if (useMock) {
+      setError(null);
+      setStatus('confirming');
+      const { data, error } = await supabase.functions.invoke<MockResponse>('mock-checkout', {
+        body: {
+          cafe_id: cafeId,
+          lines: lines.map((l) => ({
+            catalog_item_id: l.catalogItemId,
+            qty: l.qty,
+            modifier_ids: l.modifiers.map((m) => m.localId),
+            note: l.note,
+          })),
+          tip_cents: tipCents,
+          redeem_beans: redeemBeans,
+        },
+      });
+      if (error || !data) {
+        setError(error?.message ?? 'mock-checkout failed');
+        setStatus('ready');
+        return;
+      }
+      clearBasket();
+      router.replace(`/order/${data.order_id}`);
+      return;
+    }
+
     if (!intent || !sheetReady) return;
     setError(null);
     setStatus('paying');
@@ -128,14 +172,16 @@ export default function Checkout() {
       body: { order_id: intent.order_id },
     });
     if (confirmError) {
-      // Payment took but server didn't ack. The Stripe webhook will reconcile;
-      // route to the order screen so the user can watch state.
       console.warn('order-confirm failed; webhook will reconcile', confirmError);
     }
 
     clearBasket();
     router.replace(`/order/${intent.order_id}`);
   }
+
+  const totalForButton = useMock
+    ? expectedTotalCents
+    : intent?.totals.total_charged_cents ?? expectedTotalCents;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -149,6 +195,19 @@ export default function Checkout() {
       </View>
 
       <View style={styles.body}>
+        {useMock ? (
+          <View style={styles.notice}>
+            <Text style={styles.noticeTitle}>
+              {inExpoGo ? 'Demo mode (Expo Go)' : 'Demo mode (Stripe not configured)'}
+            </Text>
+            <Text style={styles.noticeBody}>
+              Apple Pay is disabled. Tapping Pay records the order without
+              charging anything so the full app loop (order tracking, Beans
+              earned, wallet) can be tested.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.totals}>
           <Row label="Subtotal" cents={subtotalCents} />
           {tipCents > 0 ? <Row label="Tip" cents={tipCents} /> : null}
@@ -166,10 +225,10 @@ export default function Checkout() {
         <Pressable
           style={[
             styles.cta,
-            (status !== 'ready' || !sheetReady) && styles.ctaDisabled,
+            (status !== 'ready' || (!useMock && !sheetReady)) && styles.ctaDisabled,
           ]}
           onPress={pay}
-          disabled={status !== 'ready' || !sheetReady}
+          disabled={status !== 'ready' || (!useMock && !sheetReady)}
         >
           {status === 'preparing' ? (
             <>
@@ -185,7 +244,7 @@ export default function Checkout() {
             </>
           ) : (
             <Text style={styles.ctaText}>
-              Pay {formatPence(intent?.totals.total_charged_cents ?? expectedTotalCents)}
+              {useMock ? 'Place order (demo)' : `Pay ${formatPence(totalForButton)}`}
             </Text>
           )}
         </Pressable>
@@ -228,6 +287,14 @@ const styles = StyleSheet.create({
   back: { color: '#3E2723', fontSize: 16, width: 50 },
   title: { fontSize: 17, fontWeight: '600', color: '#3E2723' },
   body: { flex: 1, padding: 16, gap: 12 },
+  notice: {
+    backgroundColor: '#FFE0B2',
+    borderRadius: 12,
+    padding: 14,
+    gap: 4,
+  },
+  noticeTitle: { fontSize: 14, fontWeight: '700', color: '#5D4037' },
+  noticeBody: { fontSize: 13, color: '#5D4037', lineHeight: 18 },
   totals: { backgroundColor: '#FFF', borderRadius: 12, padding: 14, gap: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   rowLabel: { color: '#6D4C41', fontSize: 14 },

@@ -46,6 +46,8 @@ inspector_port = 8083
 verify_jwt = true
 [functions.order-confirm]
 verify_jwt = true
+[functions.mock-checkout]
+verify_jwt = true
 [functions.loyalty-preview]
 verify_jwt = true
 [functions.reorder]
