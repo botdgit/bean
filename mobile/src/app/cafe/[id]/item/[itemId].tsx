@@ -39,16 +39,15 @@ export default function ItemDetail() {
   const groups = useMemo(() => groupModifiers(modifiers), [modifiers]);
 
   const chosen = useMemo(() => {
-    const out: { id: string; name: string; priceDeltaCents: number; squareObjectId: string }[] = [];
+    const out: { localId: string; name: string; priceDeltaCents: number }[] = [];
     for (const g of groups) {
       const ids = selection[g.listId] ?? new Set<string>();
       for (const m of g.modifiers) {
         if (ids.has(m.id)) {
           out.push({
-            id: m.id,
+            localId: m.id,
             name: m.name,
             priceDeltaCents: m.price_delta_cents,
-            squareObjectId: m.square_object_id,
           });
         }
       }
@@ -71,12 +70,11 @@ export default function ItemDetail() {
     addLine({
       lineId: uuidv4(),
       catalogItemId: item.id,
-      squareCatalogObjectId: item.square_object_id,
       name: item.name,
       unitPriceCents: item.price_cents,
       qty,
       modifiers: chosen.map((m) => ({
-        catalogObjectId: m.squareObjectId,
+        localId: m.localId,
         name: m.name,
         priceDeltaCents: m.priceDeltaCents,
       })),

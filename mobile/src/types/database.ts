@@ -12,6 +12,7 @@ export type Database = {
           email: string | null;
           name: string | null;
           bean_balance: number;
+          stripe_customer_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -21,12 +22,14 @@ export type Database = {
           email?: string | null;
           name?: string | null;
           bean_balance?: number;
+          stripe_customer_id?: string | null;
         };
         Update: {
           phone?: string | null;
           email?: string | null;
           name?: string | null;
           bean_balance?: number;
+          stripe_customer_id?: string | null;
         };
       };
       cafes: {

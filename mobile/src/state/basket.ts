@@ -1,20 +1,20 @@
 import { create } from 'zustand';
 
-// A basket line is a single chosen item with its modifier selections.
-// The Square catalog object id is the *variation* id (size is modeled as a
-// variation in Square, not a modifier), plus a flat list of modifier ids.
+// A basket line is a chosen item with its modifier selections, all referenced
+// by the BEAN-local UUIDs from `catalog_items` / `catalog_modifiers`. The
+// edge function reprices the line server-side from those ids and also pulls
+// Square object ids for downstream POS injection.
 export type BasketModifier = {
-  catalogObjectId: string;
+  localId: string;
   name: string;
   priceDeltaCents: number;
 };
 
 export type BasketLine = {
-  // Stable per-line id (uuid v4) so the same item with different modifiers
-  // can appear twice in a basket without conflicting.
+  // Stable per-line id so the same item with different modifiers can appear
+  // twice in a basket without conflicting.
   lineId: string;
   catalogItemId: string;
-  squareCatalogObjectId: string;
   name: string;
   unitPriceCents: number;
   qty: number;
