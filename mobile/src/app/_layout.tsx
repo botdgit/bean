@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ProfileProvider } from '@/hooks/useProfile';
 import { SessionProvider } from '@/hooks/useSession';
 import { loadStripeNative, stripeAvailable, stripeConfig } from '@/lib/stripe';
 
@@ -28,10 +29,12 @@ export default function RootLayout() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <SessionProvider>
-          <MaybeStripeProvider>
-            <StatusBar style="auto" />
-            <Stack screenOptions={{ headerShown: false }} />
-          </MaybeStripeProvider>
+          <ProfileProvider>
+            <MaybeStripeProvider>
+              <StatusBar style="auto" />
+              <Stack screenOptions={{ headerShown: false }} />
+            </MaybeStripeProvider>
+          </ProfileProvider>
         </SessionProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
