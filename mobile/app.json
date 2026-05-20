@@ -4,7 +4,10 @@
     "slug": "bean",
     "scheme": "bean",
     "version": "0.0.1",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -50,7 +53,8 @@
           "locationAlwaysAndWhenInUsePermission": "BEAN uses your location to show nearby coffee shops."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
