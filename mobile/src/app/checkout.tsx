@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { initPaymentSheet, presentPaymentSheet } from '@stripe/stripe-react-native';
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -8,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card } from '@/components/ui';
 import { useProfile } from '@/hooks/useProfile';
 import { canRedeem, formatPence } from '@/lib/format';
-import { inExpoGo, stripeAvailable } from '@/lib/stripe';
+import { inExpoGo, loadStripeNative, stripeAvailable } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { useBasket } from '@/state/basket';
 import { colors, radius, space, type } from '@/lib/theme';
@@ -84,6 +83,7 @@ export default function Checkout() {
         return;
       }
       setIntent(data);
+      const { initPaymentSheet } = loadStripeNative();
       const init = await initPaymentSheet({
         merchantDisplayName: 'BEAN',
         paymentIntentClientSecret: data.payment_intent_client_secret,
@@ -138,6 +138,7 @@ export default function Checkout() {
     if (!intent || !sheetReady) return;
     setError(null);
     setStatus('paying');
+    const { presentPaymentSheet } = loadStripeNative();
     const { error } = await presentPaymentSheet();
     if (error) {
       setError(error.message);

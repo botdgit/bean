@@ -21,3 +21,12 @@ export const stripeKeyMissing =
   !publishableKey || publishableKey === 'pk_test_REPLACE_ME';
 
 export const stripeAvailable = !inExpoGo && !stripeKeyMissing;
+
+// Lazily load the native Stripe module. NEVER call this unless `stripeAvailable`
+// is true: importing @stripe/stripe-react-native runs
+// `TurboModuleRegistry.getEnforcing('StripeSdk')` at module load, which throws
+// (and blanks the app) when the native module isn't present — e.g. in Expo Go.
+export function loadStripeNative(): typeof import('@stripe/stripe-react-native') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require('@stripe/stripe-react-native');
+}
