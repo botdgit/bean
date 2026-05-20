@@ -4,6 +4,7 @@
     "slug": "bean",
     "scheme": "bean",
     "version": "0.0.1",
+    "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -63,7 +64,7 @@
       }
     },
     "owner": "onico",
-    "runtimeVersion": "exposdk:52.0.0",
+    "runtimeVersion": "exposdk:54.0.0",
     "updates": {
       "url": "https://u.expo.dev/04d56fe4-34ff-4076-957d-c53e92551dd4"
     },

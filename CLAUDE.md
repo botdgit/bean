@@ -62,10 +62,16 @@ Go, so checkout falls back to the `mock-checkout` edge function (see
 `src/lib/stripe.ts` `inExpoGo`/`stripeAvailable`).
 
 - EAS project: `@onico/bean`, projectId `04d56fe4-34ff-4076-957d-c53e92551dd4`.
-- `runtimeVersion` in `app.json` is pinned to `"exposdk:52.0.0"` **specifically so
+- The app targets **Expo SDK 54** (RN 0.81, React 19). Expo Go from the App
+  Store only runs the latest SDK, so the project must track it.
+- `runtimeVersion` in `app.json` is pinned to `"exposdk:54.0.0"` **specifically so
   Expo Go can load the update**. Before making real dev/production builds,
   switch this to a policy (`fingerprint` or `appVersion`) — a hardcoded
   `exposdk:` runtime is only correct for Expo Go.
+- `babel.config.js` includes a `strip-otel-dynamic-import` plugin that
+  neutralizes `@supabase/supabase-js`'s optional `import("@opentelemetry/api")`.
+  Without it, Metro leaves a raw dynamic `import()` (variable specifier) that
+  Hermes rejects with "Invalid expression encountered" on SDK 54.
 - Publish: `cd mobile && EXPO_TOKEN=… npx eas-cli@latest update --branch preview -m "msg"`.
 - The `preview` channel is linked to the `preview` branch. Expo Go opens:
   `exp://u.expo.dev/04d56fe4-34ff-4076-957d-c53e92551dd4?channel-name=preview`
