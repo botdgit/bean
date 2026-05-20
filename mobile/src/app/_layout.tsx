@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SessionProvider } from '@/hooks/useSession';
 import { loadStripeNative, stripeAvailable, stripeConfig } from '@/lib/stripe';
 
@@ -24,13 +25,15 @@ function MaybeStripeProvider({ children }: { children: ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <SessionProvider>
-        <MaybeStripeProvider>
-          <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }} />
-        </MaybeStripeProvider>
-      </SessionProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <SessionProvider>
+          <MaybeStripeProvider>
+            <StatusBar style="auto" />
+            <Stack screenOptions={{ headerShown: false }} />
+          </MaybeStripeProvider>
+        </SessionProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
