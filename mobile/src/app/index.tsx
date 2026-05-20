@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useProfile } from '@/hooks/useProfile';
 import { useSession } from '@/hooks/useSession';
+import { colors } from '@/lib/theme';
 
 export default function Gate() {
   const { session, loading: sessionLoading } = useSession();
@@ -12,7 +13,7 @@ export default function Gate() {
     return (
       <View style={styles.center}>
         <Text style={styles.brand}>BEAN</Text>
-        <ActivityIndicator color="#3E2723" />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -27,8 +28,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF8F1',
+    backgroundColor: colors.bg,
     gap: 24,
   },
-  brand: { fontSize: 48, fontWeight: '800', letterSpacing: 4, color: '#3E2723' },
+  brand: { fontSize: 48, fontWeight: '800', letterSpacing: 4, color: colors.espresso },
 });

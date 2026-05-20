@@ -1,47 +1,52 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
+import { Card } from '@/components/ui';
 import { useSession } from '@/hooks/useSession';
 import { formatPence } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
+import { colors, radius, space, TAB_BAR_CLEARANCE, type } from '@/lib/theme';
 import type { Order, OrderStatus } from '@/types/database';
 
 type OrderWithCafe = Order & { cafes: { name: string } | null };
 
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: 'Pending',
-  paid: 'Sent to shop',
-  accepted: 'Accepted',
-  in_progress: 'Being made',
-  ready: 'Ready for pickup',
-  completed: 'Collected',
-  cancelled: 'Cancelled',
-  failed: 'Failed',
+const STATUS: Record<OrderStatus, { label: string; fg: string; bg: string }> = {
+  pending: { label: 'Pending', fg: colors.inkSoft, bg: colors.surfaceMuted },
+  paid: { label: 'Sent to shop', fg: '#7A5B12', bg: '#F6ECCF' },
+  accepted: { label: 'Accepted', fg: '#7A5B12', bg: '#F6ECCF' },
+  in_progress: { label: 'Being made', fg: '#7A5B12', bg: '#F6ECCF' },
+  ready: { label: 'Ready', fg: colors.success, bg: colors.successBg },
+  completed: { label: 'Collected', fg: colors.inkSoft, bg: colors.surfaceMuted },
+  cancelled: { label: 'Cancelled', fg: colors.danger, bg: colors.dangerBg },
+  failed: { label: 'Failed', fg: colors.danger, bg: colors.dangerBg },
 };
 
-function OrderRow({ order }: { order: OrderWithCafe }) {
+function OrderCard({ order }: { order: OrderWithCafe }) {
+  const s = STATUS[order.status];
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      style={({ pressed }) => [pressed && styles.pressed]}
       onPress={() => router.push(`/order/${order.id}`)}
     >
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cafeName}>{order.cafes?.name ?? 'Order'}</Text>
-        <Text style={styles.meta}>
-          {new Date(order.created_at).toLocaleString('en-GB')} · {STATUS_LABEL[order.status]}
-        </Text>
-      </View>
-      <Text style={styles.amount}>{formatPence(order.total_charged_cents)}</Text>
+      <Card style={styles.card}>
+        <View style={styles.avatar}>
+          <Ionicons name="bag-handle" size={22} color={colors.accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cafeName}>{order.cafes?.name ?? 'Order'}</Text>
+          <Text style={styles.meta}>
+            {new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </Text>
+          <View style={[styles.pill, { backgroundColor: s.bg }]}>
+            <Text style={[styles.pillText, { color: s.fg }]}>{s.label}</Text>
+          </View>
+        </View>
+        <Text style={styles.amount}>{formatPence(order.total_charged_cents)}</Text>
+      </Card>
     </Pressable>
   );
 }
@@ -51,58 +56,60 @@ export default function Orders() {
   const [orders, setOrders] = useState<OrderWithCafe[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!session) return;
-    let cancelled = false;
-
-    supabase
-      .from('orders')
-      .select('*, cafes(name)')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (!cancelled) {
-          setOrders((data as OrderWithCafe[]) ?? []);
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.user.id]);
+  // Refetch each time the tab regains focus so a freshly placed order shows up.
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) return;
+      let cancelled = false;
+      supabase
+        .from('orders')
+        .select('*, cafes(name)')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+        .then(({ data }) => {
+          if (!cancelled) {
+            setOrders((data as OrderWithCafe[]) ?? []);
+            setLoading(false);
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [session?.user.id]),
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Your orders</Text>
-      </View>
-      {loading ? (
-        <ActivityIndicator color="#3E2723" style={{ marginTop: 24 }} />
-      ) : orders.length === 0 ? (
-        <EmptyState title="No orders yet" body="Tap a shop to place your first order." />
-      ) : (
-        <FlatList
-          data={orders}
-          keyExtractor={(o) => o.id}
-          renderItem={({ item }) => <OrderRow order={item} />}
-          ItemSeparatorComponent={() => <View style={styles.sep} />}
-          contentContainerStyle={{ paddingBottom: 32 }}
-        />
-      )}
+      <FlatList
+        data={orders}
+        keyExtractor={(o) => o.id}
+        renderItem={({ item }) => <OrderCard order={item} />}
+        contentContainerStyle={styles.list}
+        ListHeaderComponent={<Text style={styles.title}>Orders</Text>}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator color={colors.accent} style={{ marginTop: 48 }} />
+          ) : (
+            <EmptyState title="No orders yet" body="Pick a shop and place your first order." />
+          )
+        }
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF8F1' },
-  header: { padding: 20, paddingBottom: 12 },
-  title: { fontSize: 28, fontWeight: '700', color: '#3E2723' },
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 },
-  rowPressed: { backgroundColor: '#EFEBE9' },
-  cafeName: { fontSize: 16, fontWeight: '600', color: '#3E2723' },
-  meta: { fontSize: 13, color: '#8D6E63', marginTop: 2 },
-  amount: { fontSize: 16, fontWeight: '600', color: '#3E2723' },
-  sep: { height: 1, backgroundColor: '#EFEBE9', marginHorizontal: 20 },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  list: { paddingHorizontal: space.lg, paddingBottom: TAB_BAR_CLEARANCE },
+  title: { ...type.title, marginTop: space.md, marginBottom: space.lg },
+  pressed: { transform: [{ scale: 0.99 }], opacity: 0.95 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.md },
+  avatar: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
+  cafeName: { ...type.bodyStrong, fontSize: 16 },
+  meta: { ...type.caption, marginTop: 1 },
+  pill: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3, marginTop: 6 },
+  pillText: { fontSize: 12, fontWeight: '700' },
+  amount: { ...type.bodyStrong, fontSize: 16 },
 });

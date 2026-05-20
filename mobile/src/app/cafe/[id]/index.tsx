@@ -1,35 +1,34 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BasketBadge } from '@/components/BasketBadge';
+import { BasketBar } from '@/components/BasketBar';
 import { EmptyState } from '@/components/EmptyState';
-import { MoneyText } from '@/components/MoneyText';
+import { BackButton, Card } from '@/components/ui';
 import { useCafe } from '@/hooks/useCafes';
 import { useCafeMenu } from '@/hooks/useCafeMenu';
+import { formatPence } from '@/lib/format';
 import { useBasket } from '@/state/basket';
+import { colors, radius, space, type } from '@/lib/theme';
 import type { CatalogItem } from '@/types/database';
 
-function ItemRow({ cafeId, item }: { cafeId: string; item: CatalogItem }) {
+function ItemRow({ cafeId, item, last }: { cafeId: string; item: CatalogItem; last: boolean }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.itemRow, pressed && styles.itemRowPressed]}
+      style={({ pressed }) => [styles.itemRow, !last && styles.itemBorder, pressed && styles.pressed]}
       onPress={() => router.push(`/cafe/${cafeId}/item/${item.id}`)}
     >
       <View style={{ flex: 1 }}>
         <Text style={styles.itemName}>{item.name}</Text>
         {item.description ? (
-          <Text style={styles.itemDesc}>{item.description}</Text>
+          <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
         ) : null}
       </View>
-      <MoneyText cents={item.price_cents} style={styles.itemPrice} />
+      <Text style={styles.itemPrice}>{formatPence(item.price_cents)}</Text>
+      <View style={styles.addBtn}>
+        <Ionicons name="add" size={18} color={colors.accentInk} />
+      </View>
     </Pressable>
   );
 }
@@ -43,75 +42,75 @@ export default function CafeDetail() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()} hitSlop={16}>
-          <Text style={styles.back}>‹ Shops</Text>
-        </Pressable>
-        <BasketBadge />
+        <BackButton label="Shops" onPress={() => router.back()} />
       </View>
 
       {cafeLoading || !cafe ? (
-        <ActivityIndicator color="#3E2723" style={{ marginTop: 24 }} />
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 48 }} />
       ) : (
         <ScrollView
           contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
           onScrollBeginDrag={() => id && setCafe(id)}
         >
-          <View style={styles.header}>
+          <View style={styles.hero}>
+            <View style={styles.heroIcon}>
+              <Ionicons name="cafe" size={28} color={colors.accent} />
+            </View>
             <Text style={styles.name}>{cafe.name}</Text>
             {cafe.address ? <Text style={styles.address}>{cafe.address}</Text> : null}
           </View>
 
           {menuLoading ? (
-            <ActivityIndicator color="#3E2723" style={{ marginTop: 24 }} />
+            <ActivityIndicator color={colors.accent} style={{ marginTop: 24 }} />
           ) : sections.length === 0 ? (
             <EmptyState title="Menu coming soon" />
           ) : (
             sections.map((section) => (
               <View key={section.category} style={styles.section}>
                 <Text style={styles.sectionTitle}>{section.category}</Text>
-                {section.items.map((item, idx) => (
-                  <View key={item.id}>
-                    {idx > 0 ? <View style={styles.sep} /> : null}
-                    <ItemRow cafeId={cafe.id} item={item} />
-                  </View>
-                ))}
+                <Card padded={false}>
+                  {section.items.map((item, idx) => (
+                    <ItemRow
+                      key={item.id}
+                      cafeId={cafe.id}
+                      item={item}
+                      last={idx === section.items.length - 1}
+                    />
+                  ))}
+                </Card>
               </View>
             ))
           )}
         </ScrollView>
       )}
+
+      <BasketBar />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF8F1' },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  safe: { flex: 1, backgroundColor: colors.bg },
+  headerRow: { paddingHorizontal: space.lg, paddingVertical: space.sm },
+  scroll: { paddingHorizontal: space.lg, paddingBottom: 120 },
+  hero: { paddingTop: space.sm, paddingBottom: space.lg, gap: 6 },
+  heroIcon: {
+    width: 60, height: 60, borderRadius: radius.lg, backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center', marginBottom: space.sm,
   },
-  back: { color: '#3E2723', fontSize: 16 },
-  scroll: { paddingBottom: 32 },
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
-  name: { fontSize: 28, fontWeight: '700', color: '#3E2723' },
-  address: { fontSize: 14, color: '#6D4C41', marginTop: 4 },
-  section: { marginTop: 16, backgroundColor: '#FFF', marginHorizontal: 16, borderRadius: 16, overflow: 'hidden' },
-  sectionTitle: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 8,
-    fontSize: 13,
-    color: '#8D6E63',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  name: { ...type.title },
+  address: { ...type.body, fontSize: 14 },
+  section: { marginTop: space.lg, gap: space.sm },
+  sectionTitle: { ...type.overline, marginLeft: space.xs },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg },
+  itemBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+  pressed: { backgroundColor: colors.surfaceMuted },
+  itemName: { ...type.bodyStrong, fontSize: 16 },
+  itemDesc: { ...type.caption, marginTop: 2, lineHeight: 17 },
+  itemPrice: { ...type.bodyStrong, fontSize: 15 },
+  addBtn: {
+    width: 32, height: 32, borderRadius: radius.pill, backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center',
   },
-  itemRow: { flexDirection: 'row', padding: 16, alignItems: 'center', backgroundColor: '#FFF' },
-  itemRowPressed: { backgroundColor: '#EFEBE9' },
-  itemName: { fontSize: 16, fontWeight: '500', color: '#3E2723' },
-  itemDesc: { fontSize: 13, color: '#8D6E63', marginTop: 2 },
-  itemPrice: { fontSize: 15, fontWeight: '600', color: '#3E2723', marginLeft: 12 },
-  sep: { height: 1, backgroundColor: '#EFEBE9', marginHorizontal: 16 },
 });

@@ -1,8 +1,10 @@
 import { Redirect, Tabs } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { GlassTabBar } from '@/components/GlassTabBar';
 import { useProfile } from '@/hooks/useProfile';
 import { useSession } from '@/hooks/useSession';
+import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { session, loading: sessionLoading } = useSession();
@@ -11,7 +13,7 @@ export default function TabsLayout() {
   if (sessionLoading || (session && profileLoading)) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#3E2723" />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -20,12 +22,8 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#3E2723',
-        tabBarInactiveTintColor: '#A1887F',
-        tabBarStyle: { backgroundColor: '#FFF8F1', borderTopColor: '#EFEBE9' },
-      }}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
+      tabBar={(props) => <GlassTabBar {...props} />}
     >
       <Tabs.Screen name="index" options={{ title: 'Shops' }} />
       <Tabs.Screen name="wallet" options={{ title: 'Wallet' }} />
@@ -39,6 +37,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF8F1',
+    backgroundColor: colors.bg,
   },
 });

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -14,9 +15,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ModifierPicker, Selection, groupModifiers } from '@/components/ModifierPicker';
+import { BackButton, Button } from '@/components/ui';
 import { useCatalogItem } from '@/hooks/useCafeMenu';
 import { formatPence } from '@/lib/format';
 import { useBasket } from '@/state/basket';
+import { colors, radius, space, subtleShadow, type } from '@/lib/theme';
 
 function uuidv4(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -44,11 +47,7 @@ export default function ItemDetail() {
       const ids = selection[g.listId] ?? new Set<string>();
       for (const m of g.modifiers) {
         if (ids.has(m.id)) {
-          out.push({
-            localId: m.id,
-            name: m.name,
-            priceDeltaCents: m.price_delta_cents,
-          });
+          out.push({ localId: m.id, name: m.name, priceDeltaCents: m.price_delta_cents });
         }
       }
     }
@@ -58,8 +57,6 @@ export default function ItemDetail() {
   const unitCents = (item?.price_cents ?? 0) + chosen.reduce((s, m) => s + m.priceDeltaCents, 0);
   const totalCents = unitCents * qty;
 
-  // Disable Add if any single-select group is required but unset. For v1 we
-  // treat all single-select groups as required (matches Square's default).
   const unsetRequired = groups.some(
     (g) => g.selectionType === 'single' && !(selection[g.listId]?.size ?? 0),
   );
@@ -86,7 +83,7 @@ export default function ItemDetail() {
   if (loading || !item) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ActivityIndicator color="#3E2723" style={{ marginTop: 24 }} />
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 48 }} />
       </SafeAreaView>
     );
   }
@@ -94,9 +91,7 @@ export default function ItemDetail() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()} hitSlop={16}>
-          <Text style={styles.back}>‹ Menu</Text>
-        </Pressable>
+        <BackButton label="Menu" onPress={() => router.back()} />
       </View>
 
       <KeyboardAvoidingView
@@ -104,10 +99,7 @@ export default function ItemDetail() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Text style={styles.name}>{item.name}</Text>
             {item.description ? <Text style={styles.desc}>{item.description}</Text> : null}
@@ -124,7 +116,7 @@ export default function ItemDetail() {
             value={note}
             onChangeText={setNote}
             placeholder="e.g. extra hot, please"
-            placeholderTextColor="#A1887F"
+            placeholderTextColor={colors.inkMuted}
             multiline
             maxLength={140}
           />
@@ -132,30 +124,23 @@ export default function ItemDetail() {
           <View style={styles.qtyRow}>
             <Text style={styles.qtyLabel}>Quantity</Text>
             <View style={styles.qtyControls}>
-              <Pressable
-                style={styles.qtyBtn}
-                onPress={() => setQty((q) => Math.max(1, q - 1))}
-              >
-                <Text style={styles.qtyBtnText}>−</Text>
+              <Pressable style={styles.qtyBtn} onPress={() => setQty((q) => Math.max(1, q - 1))}>
+                <Ionicons name="remove" size={20} color={colors.ink} />
               </Pressable>
               <Text style={styles.qtyValue}>{qty}</Text>
               <Pressable style={styles.qtyBtn} onPress={() => setQty((q) => q + 1)}>
-                <Text style={styles.qtyBtnText}>+</Text>
+                <Ionicons name="add" size={20} color={colors.ink} />
               </Pressable>
             </View>
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
-          <Pressable
-            style={[styles.cta, unsetRequired && styles.ctaDisabled]}
-            disabled={unsetRequired}
+          <Button
+            label={unsetRequired ? 'Choose your options' : `Add to basket  ·  ${formatPence(totalCents)}`}
             onPress={add}
-          >
-            <Text style={styles.ctaText}>
-              {unsetRequired ? 'Choose your options' : `Add to basket · ${formatPence(totalCents)}`}
-            </Text>
-          </Pressable>
+            disabled={unsetRequired}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -163,42 +148,39 @@ export default function ItemDetail() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF8F1' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   flex: { flex: 1 },
-  headerRow: { paddingHorizontal: 16, paddingVertical: 8 },
-  back: { color: '#3E2723', fontSize: 16 },
-  scroll: { padding: 16, paddingBottom: 32, gap: 16 },
+  headerRow: { paddingHorizontal: space.lg, paddingVertical: space.sm },
+  scroll: { padding: space.lg, paddingBottom: space.xxl, gap: space.lg },
   header: { gap: 4 },
-  name: { fontSize: 24, fontWeight: '700', color: '#3E2723' },
-  desc: { fontSize: 14, color: '#6D4C41' },
-  basePrice: { marginTop: 8, fontSize: 16, fontWeight: '600', color: '#3E2723' },
-  sectionLabel: {
-    fontSize: 13,
-    color: '#3E2723',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
-  },
+  name: { ...type.title },
+  desc: { ...type.body, fontSize: 15 },
+  basePrice: { marginTop: space.sm, ...type.bodyStrong, fontSize: 17 },
+  sectionLabel: { ...type.overline, marginLeft: space.xs },
   note: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 14,
-    minHeight: 60,
-    color: '#3E2723',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: space.lg,
+    minHeight: 70,
+    color: colors.ink,
     fontSize: 15,
     textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  qtyLabel: { fontSize: 16, color: '#3E2723', fontWeight: '500' },
-  qtyControls: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  qtyLabel: { ...type.bodyStrong, fontSize: 16 },
+  qtyControls: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   qtyBtn: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF',
-    alignItems: 'center', justifyContent: 'center',
+    width: 40, height: 40, borderRadius: radius.pill, backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center', ...subtleShadow,
   },
-  qtyBtnText: { fontSize: 20, color: '#3E2723', fontWeight: '600' },
-  qtyValue: { fontSize: 18, color: '#3E2723', fontWeight: '600', minWidth: 24, textAlign: 'center' },
-  footer: { padding: 16, backgroundColor: '#FFF8F1', borderTopWidth: 1, borderTopColor: '#EFEBE9' },
-  cta: { backgroundColor: '#3E2723', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  ctaDisabled: { opacity: 0.4 },
-  ctaText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  qtyValue: { fontSize: 18, fontWeight: '700', color: colors.ink, minWidth: 24, textAlign: 'center' },
+  footer: {
+    padding: space.lg,
+    paddingBottom: space.xl,
+    backgroundColor: colors.bg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.line,
+  },
 });

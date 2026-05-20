@@ -1,20 +1,20 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button, Field } from '@/components/ui';
 import { OAuthProvider, signInWithOAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { colors, space, type } from '@/lib/theme';
 
 type Mode = 'signin' | 'signup';
 
@@ -33,20 +33,16 @@ export default function SignIn() {
     setError(null);
     setNotice(null);
     setBusy('email');
-
     const creds = { email: email.trim(), password };
     const { data, error } =
       mode === 'signin'
         ? await supabase.auth.signInWithPassword(creds)
         : await supabase.auth.signUp(creds);
-
     setBusy(null);
     if (error) {
       setError(error.message);
       return;
     }
-    // With email confirmation disabled, signUp returns a session immediately.
-    // If a project later requires confirmation, signUp returns no session.
     if (mode === 'signup' && !data.session) {
       setNotice('Check your email to confirm your account, then sign in.');
       setMode('signin');
@@ -70,35 +66,29 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.brand}>BEAN</Text>
-          <Text style={styles.tagline}>Order ahead. Earn Beans.</Text>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.brandWrap}>
+            <Text style={styles.brand}>BEAN</Text>
+            <Text style={styles.tagline}>Order ahead. Earn Beans.</Text>
+          </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
+            <Field
+              label="Email"
               value={email}
               onChangeText={setEmail}
               placeholder="you@example.com"
-              placeholderTextColor="#A1887F"
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect={false}
             />
-
-            <Text style={[styles.label, styles.labelTop]}>Password</Text>
-            <TextInput
-              style={styles.input}
+            <Field
+              label="Password"
               value={password}
               onChangeText={setPassword}
               placeholder="At least 6 characters"
-              placeholderTextColor="#A1887F"
               secureTextEntry
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             />
@@ -106,19 +96,13 @@ export default function SignIn() {
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 
-            <Pressable
-              style={[styles.primary, !canSubmit && styles.disabled]}
-              disabled={!canSubmit}
+            <Button
+              label={mode === 'signin' ? 'Sign in' : 'Create account'}
               onPress={submitEmail}
-            >
-              {busy === 'email' ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <Text style={styles.primaryText}>
-                  {mode === 'signin' ? 'Sign in' : 'Create account'}
-                </Text>
-              )}
-            </Pressable>
+              loading={busy === 'email'}
+              disabled={!canSubmit}
+              style={{ marginTop: space.sm }}
+            />
 
             <Pressable
               onPress={() => {
@@ -129,9 +113,7 @@ export default function SignIn() {
               hitSlop={8}
             >
               <Text style={styles.toggle}>
-                {mode === 'signin'
-                  ? "New here? Create an account"
-                  : 'Have an account? Sign in'}
+                {mode === 'signin' ? 'New here? Create an account' : 'Have an account? Sign in'}
               </Text>
             </Pressable>
           </View>
@@ -142,33 +124,25 @@ export default function SignIn() {
             <View style={styles.divider} />
           </View>
 
-          <Pressable
-            style={[styles.social, styles.apple, busy !== null && styles.disabled]}
-            disabled={busy !== null}
+          <Button
+            label="Continue with Apple"
+            icon="logo-apple"
+            variant="dark"
             onPress={() => social('apple')}
-          >
-            {busy === 'apple' ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.appleText}> Continue with Apple</Text>
-            )}
-          </Pressable>
-
-          <Pressable
-            style={[styles.social, styles.google, busy !== null && styles.disabled]}
+            loading={busy === 'apple'}
             disabled={busy !== null}
+            style={{ marginBottom: space.md }}
+          />
+          <Button
+            label="Continue with Google"
+            icon="logo-google"
+            variant="light"
             onPress={() => social('google')}
-          >
-            {busy === 'google' ? (
-              <ActivityIndicator color="#3E2723" />
-            ) : (
-              <Text style={styles.googleText}>Continue with Google</Text>
-            )}
-          </Pressable>
+            loading={busy === 'google'}
+            disabled={busy !== null}
+          />
 
-          <Text style={styles.legal}>
-            By continuing you agree to BEAN's Terms and Privacy Policy.
-          </Text>
+          <Text style={styles.legal}>By continuing you agree to BEAN's Terms and Privacy Policy.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -176,48 +150,18 @@ export default function SignIn() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFF8F1' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   flex: { flex: 1 },
-  scroll: { padding: 24, paddingTop: 48, gap: 4 },
-  brand: { fontSize: 48, fontWeight: '800', letterSpacing: 4, color: '#3E2723' },
-  tagline: { marginTop: 8, fontSize: 16, color: '#5D4037', marginBottom: 24 },
-  form: { gap: 8 },
-  label: { fontSize: 13, color: '#6D4C41' },
-  labelTop: { marginTop: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D7CCC8',
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: '#3E2723',
-  },
-  error: { color: '#B71C1C', fontSize: 13, marginTop: 4 },
-  notice: { color: '#2E7D32', fontSize: 13, marginTop: 4 },
-  primary: {
-    marginTop: 12,
-    backgroundColor: '#3E2723',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  disabled: { opacity: 0.4 },
-  primaryText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
-  toggle: { color: '#6D4C41', textAlign: 'center', marginTop: 14, fontSize: 14 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 20 },
-  divider: { flex: 1, height: 1, backgroundColor: '#E0D5CE' },
-  dividerText: { color: '#8D6E63', fontSize: 13 },
-  social: {
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  apple: { backgroundColor: '#000' },
-  appleText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
-  google: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#D7CCC8' },
-  googleText: { color: '#3E2723', fontSize: 16, fontWeight: '600' },
-  legal: { color: '#8D6E63', fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: 17 },
+  scroll: { padding: space.xxl, paddingTop: space.xxxl },
+  brandWrap: { marginBottom: space.xxl },
+  brand: { fontSize: 52, fontWeight: '800', letterSpacing: 4, color: colors.espresso },
+  tagline: { ...type.body, marginTop: space.sm },
+  form: { gap: space.md },
+  error: { color: colors.danger, fontSize: 13 },
+  notice: { color: colors.success, fontSize: 13 },
+  toggle: { color: colors.inkSoft, textAlign: 'center', marginTop: space.md, fontSize: 14, fontWeight: '600' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginVertical: space.xl },
+  divider: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
+  dividerText: { color: colors.inkMuted, fontSize: 13 },
+  legal: { color: colors.inkMuted, fontSize: 12, textAlign: 'center', marginTop: space.xl, lineHeight: 17 },
 });
