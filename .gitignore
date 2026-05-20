@@ -46,3 +46,6 @@ Thumbs.db
 supabase/.branches/
 supabase/.temp/
 supabase/.env
+
+# Generated EAS Update preview QR (changes per publish)
+ops/*-qr.png

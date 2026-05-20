@@ -54,6 +54,26 @@ The full v1 plan lives at `/root/.claude/plans/bean-ios-app-is-resilient-eclipse
 - Generate DB types after schema changes: `supabase gen types typescript --linked > mobile/src/types/database.ts`.
 - Mobile dev: `cd mobile && npm install && npx expo start --dev-client` (requires a dev build installed on the iPhone — `eas build --profile development --platform ios`).
 
+## Running in Expo Go (preview via EAS Update)
+
+The sandbox can't tunnel Metro, so for phone testing we publish an EAS Update
+that Expo Go loads from Expo's CDN. Stripe is a native module absent from Expo
+Go, so checkout falls back to the `mock-checkout` edge function (see
+`src/lib/stripe.ts` `inExpoGo`/`stripeAvailable`).
+
+- EAS project: `@onico/bean`, projectId `04d56fe4-34ff-4076-957d-c53e92551dd4`.
+- `runtimeVersion` in `app.json` is pinned to `"exposdk:52.0.0"` **specifically so
+  Expo Go can load the update**. Before making real dev/production builds,
+  switch this to a policy (`fingerprint` or `appVersion`) — a hardcoded
+  `exposdk:` runtime is only correct for Expo Go.
+- Publish: `cd mobile && EXPO_TOKEN=… npx eas-cli@latest update --branch preview -m "msg"`.
+- The `preview` channel is linked to the `preview` branch. Expo Go opens:
+  `exp://u.expo.dev/04d56fe4-34ff-4076-957d-c53e92551dd4?channel-name=preview`
+  (always latest) or a specific `/group/<id>` URL (pinned).
+- Hot reload does NOT apply — each code change needs a re-publish.
+- Test sign-in uses Supabase test OTP numbers (+447700900000/001/002, code
+  `123456`), configured in the project's auth settings.
+
 ## What's NOT Built Yet
 
 This repo is at M1 (Skateboard). Most files are stubs. Before adding features, check the milestone status in the plan file and prefer extending existing structure over creating parallel implementations.

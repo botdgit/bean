@@ -57,7 +57,21 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "04d56fe4-34ff-4076-957d-c53e92551dd4"
       }
+    },
+    "owner": "onico",
+    "runtimeVersion": "exposdk:52.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/04d56fe4-34ff-4076-957d-c53e92551dd4"
+    },
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     }
   }
 }
